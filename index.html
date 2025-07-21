@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race App Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom alert styles - kept from previous version */
+        .custom-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #22c55e;
+            color: white;
+            padding: 1.5rem 2.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            max-width: 24rem;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4 font-inter text-gray-200">
+
+    <div class="container mx-auto p-8 bg-zinc-900 rounded-xl shadow-2xl border-t-4 border-blue-600 max-w-4xl">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-700">
+            <div class="p-3 rounded-lg bg-gray-800 border border-gray-700 shadow-md">
+                <span class="font-extrabold text-2xl text-blue-500 tracking-wider">RACE.APP</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="showSavedDetailsBtn"
+                    class="p-3 rounded-lg bg-gray-800 border border-gray-700 shadow-md cursor-pointer hover:bg-gray-700 transition duration-300">
+                    <span class="font-bold text-lg text-amber-400">SAVED (<span id="savedCount">0</span>)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Next Race Section -->
+        <div class="mb-10 text-center md:text-left">
+            <p class="text-2xl text-gray-100">
+                Next Race: <span id="nextRaceName" class="text-orange-500 font-bold"></span> In
+                <span id="countdownDays" class="text-red-500 font-extrabold">0</span> days,
+                <span id="countdownHours" class="text-red-500 font-extrabold">0</span> hours,
+                <span class="text-red-500 font-extrabold">0</span> minutes
+            </p>
+            <p class="text-lg text-gray-300">
+                Circuit: <span id="nextRaceCircuit"></span>
+            </p>
+        </div>
+
+        <!-- Dropdowns Section -->
+        <div id="mainContent" class="mb-10 space-y-4">
+            <!-- Race Name Dropdown -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700">
+                <label for="raceNameSelect" class="block text-lg font-bold text-blue-400 mb-2">Race Name</label>
+                <select id="raceNameSelect"
+                    class="w-full bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                    <option value="" disabled selected>Select a Race Name</option>
+                </select>
+            </div>
+
+            <!-- Team Name Dropdown -->
+            <div id="teamDropdownContainer" class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hidden">
+                <label for="teamNamesSelect" class="block text-lg font-bold text-blue-400 mb-2">Team Name</label>
+                <select id="teamNamesSelect"
+                    class="w-full bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                    <option value="" disabled selected>Select a Team Name</option>
+                </select>
+            </div>
+
+            <!-- Upgrade Name Dropdown -->
+            <div id="upgradesDropdownContainer"
+                class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hidden">
+                <label for="upgradesNameSelect" class="block text-lg font-bold text-blue-400 mb-2">Upgrade Name</label>
+                <select id="upgradesNameSelect"
+                    class="w-full bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                    <option value="" disabled selected>Select an Upgrade</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Details Section (Spoilers removed) -->
+        <div id="detailsCard" class="flex-col md:flex-row gap-8 mb-8 hidden">
+            <div class="relative flex-1 bg-gray-800 border border-gray-700 p-8 rounded-xl shadow-lg">
+                <h3 class="font-bold text-2xl mb-4 text-white">Details</h3>
+
+                <p class="mb-3 text-gray-300"><span class="font-semibold text-white">Part Name:</span> <span
+                        id="detailPartName"></span></p>
+                <p class="mb-3 text-gray-300"><span class="font-semibold text-white">Reason for upgrade:</span> <span
+                        id="detailPrimaryReason"></span></p>
+                <p class="mb-3 text-gray-300"><span class="font-semibold text-white">Geometric Differences:</span> <span
+                        id="detailGeometricDifferences"></span></p>
+                <p class="text-gray-300"><span class="font-semibold text-white">Description:</span> <span
+                        id="detailDescription"></span></p>
+
+                <button id="saveDetailBtn"
+                    class="mt-8 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 shadow-xl font-bold tracking-wide">
+                    Save Detail Card <span class="ml-2">&#10003;</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Saved Details View -->
+        <div id="savedDetailsView"
+            class="bg-zinc-800 border border-zinc-700 p-8 rounded-xl shadow-2xl w-full max-w-4xl mx-auto hidden">
+            <h3 class="font-bold text-2xl mb-6 text-white text-center">Your Saved Details</h3>
+            <div id="savedDetailsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Saved details will be rendered here by JavaScript -->
+            </div>
+            <button id="backToMainBtn"
+                class="mt-8 px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-300 shadow-lg font-bold mx-auto block">
+                Back to Main
+            </button>
+        </div>
+
+        <!-- Custom Alert Modal -->
+        <div id="customAlert" class="custom-alert hidden">
+            <p id="alertMessage" class="text-lg font-semibold"></p>
+            <button id="closeAlertBtn"
+                class="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded-md transition duration-300">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Data Definitions
+        const raceSchedule = [
+            { name: "Moët & Chandon Belgian GP", circuit: "Circuit de Spa-Francorchamps", raceDate: new Date("2025-07-27T09:00:00") },
+            { name: "Lenovo Hungarian GP", circuit: "Hungaroring", raceDate: new Date("2025-08-03T09:00:00") },
+            { name: "Heineken Dutch GP", circuit: "Circuit Park Zandvoort", raceDate: new Date("2025-08-31T09:00:00") },
+            { name: "Pirelli Italian GP", circuit: "Autodromo Nazionale Monza", raceDate: new Date("2025-09-07T09:00:00") },
+            { name: "Qatar Airways Azerbaijan GP", circuit: "Baku City Circuit", raceDate: new Date("2025-09-21T07:00:00") },
+            { name: "Singapore Airlines Singapore GP", circuit: "Marina Bay Street Circuit", raceDate: new Date("2025-10-05T08:00:00") },
+            { name: "MSC Cruises United States GP", circuit: "Circuit of the Americas", raceDate: new Date("2025-10-19T15:00:00") },
+            { name: "Mexico City GP", circuit: "Autodromo Hermanos Rodriguez", raceDate: new Date("2025-10-26T16:00:00") },
+            { name: "MSC Cruises São Paulo GP", circuit: "Autodromo Jose Carlos Pace", raceDate: new Date("2025-11-09T12:00:00") },
+            { name: "Heineken Las Vegas GP", circuit: "Las Vegas Street Circuit", raceDate: new Date("2025-11-22T23:00:00") },
+            { name: "Qatar Airways Qatar GP", circuit: "Losail International Circuit", raceDate: new Date("2025-11-30T11:00:00") },
+            { name: "Etihad Airways Abu Dhabi GP", circuit: "Yas Marina Circuit", raceDate: new Date("2025-12-07T08:00:00") },
+        ];
+
+        const upgradeData = [
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Revised floor geometry",
+                "Description": "The complete floor has been revised resulting in improved flow conditioning and a redistribution of suction to gain overall aerodynamic performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Corner",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "Revised Rear Corner Inlet",
+                "Description": "Modification to Rear Brake Duct Inlet aiming at overall improvement in local flow conditioning for improved aerodynamic and brake cooling performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "Red Bull Racing",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Re-profiled surfaces to supplement the changes to the fences",
+                "Description": "Revised surfaces to improve pressure distribution over the length of the floor allowing more load to be extracted whilst maintaining adequate flow stability."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "The shape of the main body of the floor has evolved slightly as part of this update.",
+                "Description": "The revised surfaces improve the flow structures under the floor increasing the local load on the lower surface and hence improving performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Floor Fences",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "The fences have revised curvature and local details.",
+                "Description": "The revised surfaces improve the flow structures under the floor increasing the local load on the lower surface and hence improving performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Floor Edge",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Small changes to the details of the floor edge wing and the main floor inboard of this.",
+                "Description": "The revised surfaces improve the flow structures under the floor increasing the local load on the lower surface and hence improving performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 4,
+                "UpdatedComponent": "Coke/Engine Cover",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Change to the profile of the top deck of the bodywork.",
+                "Description": "This revised shape is developed alongside the floor edge details to improve the performance of the floor as above."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Expansion rate changed on main floor",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Floor Fences",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Fences re-aligned",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Floor Edge",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Smaller Floor edge wing",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 4,
+                "UpdatedComponent": "Sidepod Inlet",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "Profiled Sidepod Inlet geometry and Mirror update",
+                "Description": "The revised sidepod inlet improves local flow alignment, enabling cleaner airflow delivery to the rear of the car, hence improving overall car performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Circuit specific - Balance Range",
+                "GeometricDifferences": "New front wing flap geometry.",
+                "Description": "The flap elements has been changed for smaller profiles, to cater for the low balance requirements of this and subsequent events."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Fences",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Changes to forward floor area.",
+                "Description": "In continuation of recent floor development, new forward floor geometry modifications are implemented at this event, gaining some efficient downforce."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "British Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Circuit specific - Balance Range",
+                "GeometricDifferences": "New front wing flap design",
+                "Description": "New front wing flap design with a reshaped flap geometry to provide a more efficient low balance flap option if lower downforce levels are used at this event."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Medium-High Downforce Rear Wing",
+                "Description": "A medium-high Downforce Rear Wing sitting between the medium and high downforce Rear Wing assemblies has been made available for this track, featuring an efficient reduction in Drag compared to the high downforce wing."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Medium-High Downforce Beam Wing",
+                "Description": "In order to ensure the high downforce Rear Wing assembly is suitable across multiple circuits, a Beamwing with medium-high level of load has been designed alongside the aforementioned assembly."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Medium Downforce Beam Wing",
+                "Description": "In order to ensure the high downforce Rear Wing assembly is suitable across multiple circuits, a Beamwing with a medium level of load has been designed alongside the aforementioned assembly."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 4,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Performance - Mechanical Setup",
+                "GeometricDifferences": "Front Suspension Geometry Update",
+                "Description": "In order to deal with the unique cornering challenges that this circuit brings, the front suspension geometry has been modified."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 5,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "Increased Front Brake Cooling Option",
+                "Description": "Given the significant brake cooling demand of this circuit, an option to increase brake cooling on the front axle is available to deploy should this be required."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "SCUDERIA FERRARI HP",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Circuit specific",
+                "GeometricDifferences": "Modification to trackrod / suspension fairings and FBD scoop clearance",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "SCUDERIA FERRARI HP",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "",
+                "GeometricDifferences": "",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "SCUDERIA FERRARI HP",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Higher Downforce Top Rear Wing and Lower Rear Wing designs",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "SCUDERIA FERRARI HP",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 4,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "",
+                "GeometricDifferences": "",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Red Bull Racing",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Rear wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Enlarged rear wing upper and beam, for camber and chord",
+                "Description": "The Monaco circuit rearwards aerodynamic load and the enlarged rear wing plus beam wing provides this at the lower car speeds encountered"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Red Bull Racing",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Reliability",
+                "GeometricDifferences": "Revised wishbone faring",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Red Bull Racing",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "Reliability",
+                "GeometricDifferences": "Revised exit duct and gaitor",
+                "Description": "To attain the necessary cooling for the front brakes, a larger exit duct is available with a consequential trim to the gaitor sealing the upper wishbone."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Circuit specific - Balance Range",
+                "GeometricDifferences": "Front wing flap with more aggressive profiles.",
+                "Description": "This is a higher loaded front wing flap to achieve the desired car setup to balance the more powerful rear wing also introduced at this event."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "More aggressive rear wing with more surface area.",
+                "Description": "This rear wing generates more load than the versions which have been used previously this season and is introduced due the characteristics of this circuit."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Rear Corner",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "The inlet is increased and the exit duct and the vanes surrounding it have been revised.",
+                "Description": "The inlet and exit changes increase flow through the duct and hence cooling. The geometry has increased loading on the surfaces of the devices so raising the local load generated in the area."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "BWT ALPINE F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Performance – Mechanical Setup",
+                "GeometricDifferences": "New trackrod fairing and supports to suit Monaco racetrack",
+                "Description": "This modification to the front suspension increases the road wheel angle. This modification is needed for the specific circuit characteristics."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "BWT ALPINE F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "More loaded top rear wing main plane",
+                "Description": "The top rear wing is more loaded, delivering more downforce and offering the best lap-time for the specific circuit characteristics of Monaco"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "BWT ALPINE F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Rear beam wing designed to work with the top rear wing update",
+                "Description": "Similar to the rear wing, the beam wing features more load with the objective of delivering the best lap-time around Monaco."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "More cambered RW profile cluster",
+                "Description": "This circuit-specific rear wing uses the full regulation box to maximize downforce, accepting the associated drag increase, which is less penalizing in Monaco compared to other circuits"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "More cambered Lower Rear Wing Profiles",
+                "Description": "This option is tailored to operate with the more aggressive rear wing design, continuing to aim for increased downforce."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Performance - Mechanical Setup",
+                "GeometricDifferences": "Front Trackrod position",
+                "Description": "A minor adjustment to the front trackrod was needed to meet the circuit-specific steering angle requirements."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "Circuit specific – Mechanical Setup",
+                "GeometricDifferences": "The shape of the cooling exit duct and trackrod ends has been adjusted to increase clearance for high steer angles",
+                "Description": "The steering angle required at Monaco increases the clearance requirements between suspension & brake duct components. This update addresses these clearance issues with a minimal change on aerodynamic performance."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "A new double-element high downforce beam wing.",
+                "Description": "The highly cambered and high incidence elements increase the downforce generated by the beam wing, whilst aerodynamically supporting the flow attachment of the upper wing."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "A new max downforce upper wing.",
+                "Description": "The camber of the upper wing profiles is increased to maximise the load generated. The tip shape helps to improve the overall efficiency."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "The rear wing for Monaco is a larger wing overall with a high angle of attack. It is the 2024 RWing that we ran in Monaco last year.",
+                "Description": "The larger upper rear wing delivers more downforce and"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Beam Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "",
+                "Description": "The larger beam wings and pylon wing work together to"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Performance - Mechanical Setup",
+                "GeometricDifferences": "",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 4,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "There is a larger exit available for the front brake duct. This increases the brake disc/caliper cooling, which is appropriate for Monaco.",
+                "Description": "The larger exit simply allows more air to flow through the brake duct assembly and therefore provides more cooling to the brake components. This effectively compensates for the lower straight-line speed in Monaco and the increased brake duty."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "High downforce rear wing assembly",
+                "Description": "For this specific track and future events, we have introduced a new high-downforce rear wing assembly, which efficiently increases load."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Monaco Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 MONACO GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "New front brake duct design",
+                "Description": "The new design offers an increased brake system cooling flow to accommodate the low average airspeed of this specific track."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "SCUDERIA FERRARI HP",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Update of chordwise and spanwise loading distribution of the wing elements, together with a revised endplate and outboard tip rolls",
+                "Description": "Not track specific, this front wing introduction is phased with the update of the articles 3.15.4 and 3.15.5 of the technical regulations, effective from the Spanish Grand Prix onwards"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "SCUDERIA FERRARI HP",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Redesign of the outboard tip and roll on the high downforce top rear wing",
+                "Description": "The high downforce top rear wing, carried over from 2024 and made available in Imola, received a local update to the outboard tip and roll geometries. Local flow features are improved, returning an efficient load increase."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "Red Bull Racing",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "First and second elements revised primarily in section. Flap elements and tips are consequential to the first two elements.",
+                "Description": "In order to comply with the revisions to the 2025 F1 Technical Regulations applicable from the Spanish GP, the front wing geometry has been revised to gain stiffness at minimal weight cost and then iterated to pursue the load characteristics sought."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "MERCEDES-AMG PETRONAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Edge",
+                "PrimaryReason": "Performance – Local Load",
+                "GeometricDifferences": "Increased chord floor edge wing with additional vanes",
+                "Description": "Additional vane elements and flap chord increases mass flow under forward floor, increasing vorticity shed from the fence system, increasing floor load."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "MERCEDES-AMG PETRONAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Floor Fences",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "Reprofiled inboard fence",
+                "Description": "New fence profile has improved local pressure distribution and position of vorticity, improving both local and downstream load through better onset flow."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "MERCEDES-AMG PETRONAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Reprofiled mainplane and flap elements",
+                "Description": "Circuit specific rear wing, with increased camber aimed at gaining local downforce and drag along an efficiency slope appropriate for Barcelona."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Revised tip detail between the front wing elements and the endplate. Main wing sections also revised for compliance with TD018H.",
+                "Description": "The revised tip detail improves the flowfield around the outboard end of the wing increasing the load generated in that area. Changes in section are for structural reasons."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "BWT ALPINE F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Fences",
+                "PrimaryReason": "Performance – Local load",
+                "GeometricDifferences": "Reprofiled floor fences",
+                "Description": "The floor fences have been optimised locally to improve the quality of the underfloor structures. This results in an improved flow delivery to the entire floor and generates local load."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "BWT ALPINE F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance – Local load",
+                "GeometricDifferences": "Local changes to the shape of the floor",
+                "Description": "Local and subtle modifications have been done to the floor to maximise the effect of the updated fences and improve the flowfield quality."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "MONEYGRAM HAAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Mechanical Setup",
+                "GeometricDifferences": "Updated Front Wing Construction",
+                "Description": "The 2025 Technical Regulations were updated on"
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "The elements of the mainplane are new, featuring a lower central section.",
+                "Description": "The centre section of the wing is loaded further relative to the outboard, modifying the downstream flow conditions. This update also addresses the increased FW stiffness requirements for race 09 onwards."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Front Wing Endplate",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "The connection between the tips & the FWEP has been updated.",
+                "Description": "The flow around the FW tips is highly three- dimensional. The revised detail around the tips helps to reduce the losses created from this flow field."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Nose",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "The lower surface of the nose has been raised whilst the tip has been lowered.",
+                "Description": "The nose tip drops down to meet the new FW sections, whilst the raised lower surface helps to increase the load generated by the centre section of the wing, which in turn modifies the downstream flow around the car."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Corner",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "There is a revised exit geometry for the rear brake duct, which constricts the flow through the brake duct.",
+                "Description": "The revised exit geometry changes the flow rate through the brake duct and affects the brake cooling in a way that is suitable for the braking demands of Barcelona."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "ATLASSIAN WILLIAMS RACING",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Cooling Louvres",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "A new optional cooling louvre panel is available for this event. It increases the number of large louvres to the maximum that the panel can accommodate.",
+                "Description": "This update simply increases the flow through the radiators and therefore increases the PU cooling at the cost of downforce and drag. This will be our new maximum cooling setup, which may be of use in Barcelona, but is more likely to be needed later in the season."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Body",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Changes to several areas of the floor: Floor fence, outboard floor edge and diffuser.",
+                "Description": "Modifications are targeted at improved flow field conditions for the underfloor from front to back, gaining some efficient and balanced downforce."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Coke/Engine Cover",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Changes to engine cover design.",
+                "Description": "Sidepod surfaces have been updated to adapt to the new floor developments and associated interactions, modifying floor top surface flow conditions."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Spanish Grand Prix",
+                "Constructor": "STAKE F1 TEAM KICK SAUBER",
+                "RequiredEventDisplay": "FORMULA 1 SPANISH GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Local Load",
+                "GeometricDifferences": "Small change to the transition between the mainplane and the front wing endplate.",
+                "Description": "Local front wing end plate developments to improve outboard front wing performance and efficiency and also encourage better downstream flow quality."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "New Front Wing geometry",
+                "Description": "A revised front wing geometry aiming at improved aerodynamic performance across a wide range of attitudes, through a redesign of main elements as well as introduction of 'mermaid tails' to the front wing endplate."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Wing",
+                "PrimaryReason": "Circuit specific - Drag Range",
+                "GeometricDifferences": "Medium Downforce Rear Wing",
+                "Description": "Updated version of the medium downforce rear wing assembly, enabling a more efficient coverage of a larger drag range, suitable for multiple circuits."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "MCLAREN F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 3,
+                "UpdatedComponent": "Front Suspension",
+                "PrimaryReason": "Performance - Mechanical Setup",
+                "GeometricDifferences": "Updated Front Suspension Geometry",
+                "Description": "A small modification to the front suspension geometry which comes with an updated aerodynamic surface, to accommodate the geometry change and reoptimize local flow conditioning."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "MERCEDES-AMG PETRONAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Floor Corner",
+                "PrimaryReason": "Circuit Specific – Cooling Range",
+                "GeometricDifferences": "Large brake duct inlet and exit",
+                "Description": ""
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "MERCEDES-AMG PETRONAS F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Floor Edge",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "Reduced chord wing element",
+                "Description": "Reduced flap chord and tweaked vanes, increases mass flow under forward floor and vorticity shed from the fence system, increasing floor load."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "Aston Martin Aramco F1 Team",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Corner",
+                "PrimaryReason": "Circuit specific - Cooling Range",
+                "GeometricDifferences": "Front brake duct with larger exit.",
+                "Description": "The larger exit area for the front brake duct increases the massflow through the front corner increasing cooling for the characteristics of this circuit."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "BWT ALPINE F1 TEAM",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front wing",
+                "PrimaryReason": "Circuit specific - Balance Range",
+                "GeometricDifferences": "Reprofiled and shorter flap",
+                "Description": "The flap has been shortened and redesigned, generating less load, therefore offering the aero- balance range that may be required for the track characteristics."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 1,
+                "UpdatedComponent": "Front Wing",
+                "PrimaryReason": "Circuit specific - Balance Range",
+                "GeometricDifferences": "The most rearward element of the front flap features a shorter chord length.",
+                "Description": "At lower rear wing levels, the car must be balanced with reduced front downforce. This reduced-chord flap allows the aerodynamic balance to be lowered beyond the minimum range achievable by the previous flap. It achieves this by reducing the load generated by the front wing at a given flap angle."
+            },
+            {
+                "Year": 2025,
+                "RaceNo": 12,
+                "RaceName": "Canadian Grand Prix",
+                "Constructor": "Visa Cash App Racing Bulls",
+                "RequiredEventDisplay": "FORMULA 1 CANADIAN GRAND PRIX 2025",
+                "ComponentNo": 2,
+                "UpdatedComponent": "Rear Corner",
+                "PrimaryReason": "Performance - Flow Conditioning",
+                "GeometricDifferences": "The shape of the lower winglet endplate has been revised.",
+                "Description": "The vorticity shed from the brake drum winglet helps to manage the airflow around the tyre and the diffuser. This update improves the quality and consistency of the shed vortex, which in turn increases rear downforce."
+            }
+        ];
+
+        let savedDetailsList = []; // In-memory storage for saved details
+
+        // DOM Elements
+        const raceNameSelect = document.getElementById('raceNameSelect');
+        const teamNamesSelect = document.getElementById('teamNamesSelect');
+        const upgradesNameSelect = document.getElementById('upgradesNameSelect');
+        const teamDropdownContainer = document.getElementById('teamDropdownContainer');
+        const upgradesDropdownContainer = document.getElementById('upgradesDropdownContainer');
+        const detailsCard = document.getElementById('detailsCard');
+        const detailPartName = document.getElementById('detailPartName');
+        const detailPrimaryReason = document.getElementById('detailPrimaryReason');
+        const detailGeometricDifferences = document.getElementById('detailGeometricDifferences');
+        const detailDescription = document.getElementById('detailDescription');
+        // Removed spoilerToggle and spoilerContent as they are no longer needed
+        const saveDetailBtn = document.getElementById('saveDetailBtn');
+        const showSavedDetailsBtn = document.getElementById('showSavedDetailsBtn');
+        const savedCountSpan = document.getElementById('savedCount');
+        const savedDetailsView = document.getElementById('savedDetailsView');
+        const savedDetailsListContainer = document.getElementById('savedDetailsList');
+        const backToMainBtn = document.getElementById('backToMainBtn');
+        const mainContent = document.getElementById('mainContent');
+        const customAlert = document.getElementById('customAlert');
+        const alertMessage = document.getElementById('alertMessage');
+        const closeAlertBtn = document.getElementById('closeAlertBtn');
+
+        let currentRaceIndex = 0; // State for current race index
+
+        // --- Utility Functions ---
+
+        // Map RaceName from upgradeData to session_key from OpenF1 API
+        let raceNameToSessionKeyMap = {};
+        let qualifyingRaceNameToSessionKeyMap = {}; // New map for qualifying session keys
+        let sessionMap = {}; // To store all session details (race and quali)
+
+        async function fetchAndMapSessions() {
+            const baseURL = 'https://api.openf1.org/v1';
+            const year = new Date().getFullYear();
+            try {
+                // Fetch all race sessions
+                let raceSessions = await fetch(`${baseURL}/sessions?year=${year}&session_name=Race`).then(r => r.json());
+                // Fetch all qualifying sessions
+                let qualiSessions = await fetch(`${baseURL}/sessions?year=${year}&session_name=Qualifying`).then(r => r.json());
+
+                const now = new Date();
+
+                raceNameToSessionKeyMap = {};
+                qualifyingRaceNameToSessionKeyMap = {};
+                sessionMap = {};
+
+                // Process Race Sessions
+                raceSessions.filter(session => new Date(session.date_end) < now) // Only completed races
+                    .forEach(session => {
+                        const normalizedApiEventName = session.event_name
+                            .replace(/FORMULA 1\s*/i, '') // Remove "FORMULA 1 "
+                            .replace(/\s*\d{4}$/, '')     // Remove year at the end (e.g., " 2025")
+                            .replace(/\s*GRAND PRIX/i, ' Grand Prix') // Ensure consistent "Grand Prix" casing
+                            .trim();
+
+                        // Find a matching race name from your upgradeData
+                        const matchingUpgradeRace = upgradeData.find(item =>
+                            item.RaceName.toLowerCase() === normalizedApiEventName.toLowerCase()
+                        );
+
+                        if (matchingUpgradeRace) {
+                            raceNameToSessionKeyMap[matchingUpgradeRace.RaceName] = session.session_key;
+                            sessionMap[session.session_key] = session; // Store the full session object
+                        }
+                    });
+
+                // Process Qualifying Sessions for mapping
+                qualiSessions.filter(session => new Date(session.date_end) < now) // Only completed qualis
+                    .forEach(qualiSession => {
+                        const normalizedApiEventName = qualiSession.event_name
+                            .replace(/FORMULA 1\s*/i, '')
+                            .replace(/\s*\d{4}$/, '')
+                            .replace(/\s*GRAND PRIX/i, ' Grand Prix')
+                            .trim();
+
+                        const matchingUpgradeRace = upgradeData.find(item =>
+                            item.RaceName.toLowerCase() === normalizedApiEventName.toLowerCase()
+                        );
+
+                        if (matchingUpgradeRace) {
+                            // Store the latest qualifying session for this race event
+                            // Assuming event_key links race and quali for the same event
+                            const existingQualiKey = qualifyingRaceNameToSessionKeyMap[matchingUpgradeRace.RaceName];
+                            if (!existingQualiKey || (sessionMap[existingQualiKey] && new Date(qualiSession.date_end) > new Date(sessionMap[existingQualiKey].date_end))) {
+                                qualifyingRaceNameToSessionKeyMap[matchingUpgradeRace.RaceName] = qualiSession.session_key;
+                                sessionMap[qualiSession.session_key] = qualiSession; // Store full session object
+                            }
+                        }
+                    });
+
+                console.log("Race Name to Race Session Key Map (for spoilers):", raceNameToSessionKeyMap);
+                console.log("Race Name to Qualifying Session Key Map (for spoilers):", qualifyingRaceNameToSessionKeyMap);
+                console.log("All Session Map (includes race and quali for spoilers):", sessionMap);
+
+            } catch (error) {
+                console.error("Error fetching and mapping sessions:", error);
+            }
+        }
+
+
+        async function fetchF1ResultsForRace(raceName) {
+            const baseURL = 'https://api.openf1.org/v1';
+            const race_session_key = raceNameToSessionKeyMap[raceName];
+            const quali_session_key = qualifyingRaceNameToSessionKeyMap[raceName];
+
+            if (!race_session_key) {
+                console.warn(`No race session_key found for race: ${raceName}`);
+                return { winnerName: 'N/A', poleName: 'N/A' };
+            }
+
+            try {
+                // Race winner
+                const raceResult = await fetch(
+                    `${baseURL}/session_result?session_key=${race_session_key}&position=1`
+                ).then(r => r.json());
+                const winnerNumber = raceResult[0]?.driver_number;
+
+                let poleNumber = null;
+                if (quali_session_key) {
+                    const qualiResult = await fetch(
+                        `${baseURL}/session_result?session_key=${quali_session_key}&position=1`
+                    ).then(r => r.json());
+                    poleNumber = qualiResult[0]?.driver_number;
+                } else {
+                    console.warn(`No qualifying session_key found for race: ${raceName}`);
+                }
+
+                // Get winner/pole names
+                let winnerName = "";
+                let poleName = "";
+
+                if (winnerNumber) {
+                    const driver = await fetch(`${baseURL}/drivers?driver_number=${winnerNumber}`).then(r => r.json());
+                    winnerName = driver[0] ? `${driver[0].first_name} ${driver[0].last_name}` : "Unknown";
+                }
+                if (poleNumber) {
+                    const driver = await fetch(`${baseURL}/drivers?driver_number=${poleNumber}`).then(r => r.json());
+                    poleName = driver[0] ? `${driver[0].first_name} ${driver[0].last_name}` : "Unknown";
+                }
+                return { winnerName, poleName };
+
+            } catch (error) {
+                console.error("Error fetching F1 results for race:", raceName, error);
+                return { winnerName: 'Error', poleName: 'Error' };
+            }
+        }
+
+
+        function calculateCountdown(targetDate) {
+            const now = new Date().getTime();
+            const distance = targetDate.getTime() - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+            return { days, hours, minutes };
+        }
+
+        function updateCountdown() {
+            const currentRace = raceSchedule[currentRaceIndex];
+            const countdown = calculateCountdown(currentRace.raceDate);
+
+            document.getElementById('nextRaceName').textContent = currentRace.name;
+            document.getElementById('nextRaceCircuit').textContent = currentRace.circuit;
+            document.getElementById('countdownDays').textContent = countdown.days;
+            document.getElementById('countdownHours').textContent = countdown.hours;
+            document.getElementById('countdownMinutes').textContent = countdown.minutes;
+
+            if (countdown.days < 0 && countdown.hours < 0 && countdown.minutes < 0) {
+                currentRaceIndex = (currentRaceIndex + 1) % raceSchedule.length;
+            }
+        }
+
+        function showAlert(message) {
+            alertMessage.textContent = message;
+            customAlert.classList.remove('hidden');
+        }
+
+        function closeAlert() {
+            customAlert.classList.add('hidden');
+        }
+
+        // --- Dropdown Population Functions ---
+
+        function populateRaceNames() {
+            const raceNames = [...new Set(upgradeData.map(item => item.RaceName))];
+            raceNameSelect.innerHTML = '<option value="" disabled selected>Select a Race Name</option>';
+            raceNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                raceNameSelect.appendChild(option);
+            });
+        }
+
+        function populateConstructors(selectedRace) {
+            teamNamesSelect.innerHTML = '<option value="" disabled selected>Select a Team Name</option>';
+            if (selectedRace) {
+                const filteredData = upgradeData.filter(item => item.RaceName === selectedRace);
+                const constructors = [...new Set(filteredData.map(item => item.Constructor))];
+                constructors.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    teamNamesSelect.appendChild(option);
+                });
+                teamDropdownContainer.classList.remove('hidden');
+            } else {
+                teamDropdownContainer.classList.add('hidden');
+            }
+            teamNamesSelect.value = ''; // Reset selection
+            upgradesNameSelect.value = ''; // Reset dependent selection
+            upgradesDropdownContainer.classList.add('hidden'); // Hide dependent dropdown
+            detailsCard.classList.add('hidden'); // Hide details card
+        }
+
+        function populateUpdatedComponents(selectedRace, selectedConstructor) {
+            upgradesNameSelect.innerHTML = '<option value="" disabled selected>Select an Upgrade</option>';
+            if (selectedRace && selectedConstructor) {
+                const filteredData = upgradeData.filter(
+                    item => item.RaceName === selectedRace && item.Constructor === selectedConstructor
+                );
+                const components = [...new Set(filteredData.map(item => item.UpdatedComponent))];
+                components.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    upgradesNameSelect.appendChild(option);
+                });
+                upgradesDropdownContainer.classList.remove('hidden');
+            } else {
+                upgradesDropdownContainer.classList.add('hidden');
+            }
+            upgradesNameSelect.value = ''; // Reset selection
+            detailsCard.classList.add('hidden'); // Hide details card
+        }
+
+        function displayDetails(selectedRace, selectedConstructor, selectedComponent) {
+            if (selectedRace && selectedConstructor && selectedComponent) {
+                const foundDetail = upgradeData.find(
+                    item => item.RaceName === selectedRace &&
+                        item.Constructor === selectedConstructor &&
+                        item.UpdatedComponent === selectedComponent
+                );
+
+                if (foundDetail) {
+                    detailPartName.textContent = foundDetail.UpdatedComponent;
+                    detailPrimaryReason.textContent = foundDetail.PrimaryReason;
+                    detailGeometricDifferences.textContent = foundDetail.GeometricDifferences;
+                    detailDescription.textContent = foundDetail.Description;
+                    detailsCard.classList.remove('hidden');
+                } else {
+                    detailsCard.classList.add('hidden');
+                }
+            } else {
+                detailsCard.classList.add('hidden');
+            }
+        }
+
+        // --- Event Handlers ---
+
+        raceNameSelect.addEventListener('change', (e) => {
+            const selectedRace = e.target.value;
+            populateConstructors(selectedRace);
+            displayDetails(selectedRace, teamNamesSelect.value, upgradesNameSelect.value);
+            // Removed spoiler update call here
+        });
+
+        teamNamesSelect.addEventListener('change', (e) => {
+            const selectedConstructor = e.target.value;
+            populateUpdatedComponents(raceNameSelect.value, selectedConstructor);
+            displayDetails(raceNameSelect.value, selectedConstructor, upgradesNameSelect.value);
+        });
+
+        upgradesNameSelect.addEventListener('change', (e) => {
+            const selectedComponent = e.target.value;
+            displayDetails(raceNameSelect.value, teamNamesSelect.value, selectedComponent);
+        });
+
+        saveDetailBtn.addEventListener('click', () => {
+            const currentDetails = {
+                updatedComponent: detailPartName.textContent,
+                primaryReason: detailPrimaryReason.textContent,
+                geometricDifferences: detailGeometricDifferences.textContent,
+                description: detailDescription.textContent,
+                raceName: raceNameSelect.value,
+                constructor: teamNamesSelect.value,
+                id: Date.now() // Simple unique ID
+            };
+
+            if (!currentDetails.updatedComponent) {
+                showAlert("Please select an upgrade to save details.");
+                return;
+            }
+
+            const isDuplicate = savedDetailsList.some(item =>
+                item.raceName === currentDetails.raceName &&
+                item.constructor === currentDetails.constructor &&
+                item.updatedComponent === currentDetails.updatedComponent
+            );
+
+            if (isDuplicate) {
+                showAlert("This detail card is already saved!");
+                return;
+            }
+
+            savedDetailsList.push(currentDetails);
+            updateSavedCount();
+            showAlert("Detail saved successfully to app memory!");
+
+            // Clear current selections after saving
+            raceNameSelect.value = '';
+            populateConstructors(''); // This will hide team and upgrades dropdowns
+        });
+
+        showSavedDetailsBtn.addEventListener('click', () => {
+            mainContent.classList.add('hidden');
+            detailsCard.classList.add('hidden');
+            savedDetailsView.classList.remove('hidden');
+            renderSavedDetails();
+        });
+
+        backToMainBtn.addEventListener('click', () => {
+            savedDetailsView.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            // Reset main view selections
+            raceNameSelect.value = '';
+            populateConstructors('');
+            // Removed spoiler toggle reset here
+        });
+
+        closeAlertBtn.addEventListener('click', closeAlert);
+
+        function updateSavedCount() {
+            savedCountSpan.textContent = savedDetailsList.length;
+        }
+
+        function renderSavedDetails() {
+            savedDetailsListContainer.innerHTML = ''; // Clear previous list
+            if (savedDetailsList.length === 0) {
+                savedDetailsListContainer.innerHTML = '<p class="text-gray-400 text-center col-span-full">No details saved yet.</p>';
+            } else {
+                savedDetailsList.forEach(item => {
+                    const detailDiv = document.createElement('div');
+                    detailDiv.className = `bg-gray-700 border border-gray-600 p-5 rounded-lg shadow-md cursor-pointer
+                                           hover:bg-gray-600 hover:scale-105 transition-all duration-200 ease-in-out relative`;
+                    detailDiv.innerHTML = `
+                        <p class="font-semibold text-blue-300 text-lg mb-2">${item.updatedComponent}</p>
+                        <p class="text-sm text-gray-300">Race: ${item.raceName}</p>
+                        <p class="text-sm text-gray-300">Team: ${item.constructor}</p>
+                        <p class="text-sm text-gray-400 mt-2 line-clamp-3">${item.description}</p>
+                        <button class="remove-saved-detail-btn absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold" data-id="${item.id}">
+                            X
+                        </button>
+                    `;
+                    // Add event listener to the detail div itself to view details
+                    detailDiv.querySelector('p').addEventListener('click', () => handleViewSavedDetail(item));
+                    detailDiv.querySelector('p:nth-of-type(2)').addEventListener('click', () => handleViewSavedDetail(item));
+                    detailDiv.querySelector('p:nth-of-type(3)').addEventListener('click', () => handleViewSavedDetail(item));
+                    detailDiv.querySelector('p:nth-of-type(4)').addEventListener('click', () => handleViewSavedDetail(item));
+
+                    // Add event listener to the remove button
+                    detailDiv.querySelector('.remove-saved-detail-btn').addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent parent div click
+                        handleRemoveSavedDetail(parseInt(e.target.dataset.id));
+                    });
+
+                    savedDetailsListContainer.appendChild(detailDiv);
+                });
+            }
+        }
+
+        function handleRemoveSavedDetail(idToRemove) {
+            const initialLength = savedDetailsList.length;
+            savedDetailsList = savedDetailsList.filter(item => item.id !== idToRemove);
+            // Removed showAlert for successful removal
+            updateSavedCount();
+            renderSavedDetails(); // Re-render the list after removal
+        }
+
+        function handleViewSavedDetail(item) {
+            savedDetailsView.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            detailsCard.classList.remove('hidden');
+
+            // Populate main dropdowns and details card with saved item data
+            raceNameSelect.value = item.raceName;
+            populateConstructors(item.raceName); // Populate team dropdown
+            teamNamesSelect.value = item.constructor;
+            populateUpdatedComponents(item.raceName, item.constructor); // Populate upgrades dropdown
+            upgradesNameSelect.value = item.updatedComponent;
+
+            detailPartName.textContent = item.updatedComponent;
+            detailPrimaryReason.textContent = item.primaryReason;
+            detailGeometricDifferences.textContent = item.geometricDifferences;
+            detailDescription.textContent = item.description;
+
+            // Removed spoiler toggle reset here
+        }
+
+
+        // --- Initial Setup on Window Load ---
+        window.onload = function () {
+            populateRaceNames();
+            updateCountdown();
+            setInterval(updateCountdown, 60000); // Update countdown every minute
+            updateSavedCount(); // Initialize saved count
+            // Removed fetchAndMapSessions as it's no longer needed for spoilers
+        };
+    </script>
+</body>
+
+</html>
