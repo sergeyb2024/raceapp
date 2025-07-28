@@ -5,9 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Race App Dashboard</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Inter Font from Google Fonts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -35,7 +34,7 @@
     }
 
     .spoiler-content {
-      transition: all 0.3s ease-in-out;
+      transition: all 0.5s ease-in-out;
     }
 
     /* Style for the toggle switch */
@@ -56,7 +55,6 @@
   class="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4 font-inter text-gray-200">
 
   <div class="container mx-auto p-8 bg-zinc-900 rounded-xl shadow-2xl border-t-4 border-blue-600 max-w-4xl">
-    <!-- Header Section -->
     <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-700">
       <div class="p-3 rounded-lg bg-gray-800 border border-gray-700 shadow-md">
         <span class="font-extrabold text-2xl text-blue-500 tracking-wider">RACE.APP</span>
@@ -69,7 +67,6 @@
       </div>
     </div>
 
-    <!-- Next Race Section -->
     <div class="mb-10 text-center md:text-left">
       <p class="text-2xl text-gray-100">
         Next Race: <span id="nextRaceName" class="text-orange-500 font-bold"></span> In
@@ -82,9 +79,7 @@
       </p>
     </div>
 
-    <!-- Dropdowns Section -->
     <div id="mainContent" class="mb-10 space-y-4">
-      <!-- Race Name Dropdown -->
       <div class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700">
         <label for="raceNameSelect" class="block text-lg font-bold text-blue-400 mb-2">Race Name</label>
         <select id="raceNameSelect"
@@ -93,7 +88,6 @@
         </select>
       </div>
 
-      <!-- Team Name Dropdown -->
       <div id="teamDropdownContainer" class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hidden">
         <label for="teamNamesSelect" class="block text-lg font-bold text-blue-400 mb-2">Team Name</label>
         <select id="teamNamesSelect"
@@ -102,7 +96,6 @@
         </select>
       </div>
 
-      <!-- Upgrade Name Dropdown -->
       <div id="upgradesDropdownContainer" class="bg-gray-800 p-4 rounded-lg shadow-md border border-gray-700 hidden">
         <label for="upgradesNameSelect" class="block text-lg font-bold text-blue-400 mb-2">Upgrade Name</label>
         <select id="upgradesNameSelect"
@@ -112,7 +105,6 @@
       </div>
     </div>
 
-    <!-- Details Section -->
     <div id="detailsCard" class="flex-col md:flex-row gap-8 mb-8 hidden">
       <div class="relative flex-1 bg-gray-800 border border-gray-700 p-8 rounded-xl shadow-lg">
         <h3 class="font-bold text-2xl mb-4 text-white">Details</h3>
@@ -126,7 +118,6 @@
         <p class="text-gray-300"><span class="font-semibold text-white">Description:</span> <span
             id="detailDescription"></span></p>
 
-        <!-- Spoiler Section Integrated Here -->
         <div id="spoilerSectionInCard" class="hidden mt-6 pt-6 border-t border-gray-700">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold text-red-400">Spoilers</h3>
@@ -143,6 +134,9 @@
             <div id="spoilerResults" class="text-gray-300 space-y-3">
               <p>Toggle on to see results.</p>
             </div>
+            <div class="my-8 pt-6 border-t border-gray-700"></div>
+            <div class="session-container">
+                </div>
           </div>
         </div>
 
@@ -153,20 +147,17 @@
       </div>
     </div>
 
-    <!-- Saved Details View -->
     <div id="savedDetailsView"
       class="bg-zinc-800 border border-zinc-700 p-8 rounded-xl shadow-2xl w-full max-w-4xl mx-auto hidden">
       <h3 class="font-bold text-2xl mb-6 text-white text-center">Your Saved Details</h3>
       <div id="savedDetailsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Saved details will be rendered here by JavaScript -->
-      </div>
+        </div>
       <button id="backToMainBtn"
         class="mt-8 px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-300 shadow-lg font-bold mx-auto block">
         Back to Main
       </button>
     </div>
 
-    <!-- Custom Alert Modal -->
     <div id="customAlert" class="custom-alert hidden">
       <p id="alertMessage" class="text-lg font-semibold"></p>
       <button id="closeAlertBtn"
@@ -177,35 +168,35 @@
   </div>
 
   <script>
-    // Data Definitions
+    // Data Definitions with API mapping for 2025
     const raceSchedule = [
-      { name: "Louis Vuitton Australian GP", circuit: "Melbourne Grand Prix Circuit", location: "Melbourne", raceDate: new Date("2025-03-16T12:00:00") },
-      { name: "Heineken Chinese GP", circuit: "Shanghai International Circuit", location: "Shanghai", raceDate: new Date("2025-03-23T12:00:00") },
-      { name: "Lenovo Japanese GP", circuit: "Suzuka International Racing Course", location: "Suzuka", raceDate: new Date("2025-04-06T12:00:00") },
-      { name: "Gulf Air Bahrain GP", circuit: "Bahrain International Circuit", location: "Sakhir", raceDate: new Date("2025-04-13T12:00:00") },
-      { name: "STC Saudi Arabian GP", circuit: "Jeddah Street Circuit", location: "Jeddah", raceDate: new Date("2025-04-20T12:00:00") },
-      { name: "Crypto.com Miami GP", circuit: "Miami International Autodrome", location: "Miami", raceDate: new Date("2025-05-04T12:00:00") },
-      { name: "AWS Made in Italy Emilia Romagna GP", circuit: "Autodromo Enzo e Dino Ferrari", location: "Imola", raceDate: new Date("2025-05-18T12:00:00") },
-      { name: "Tag Heuer Monaco GP", circuit: "Circuit de Monaco", location: "Monaco", raceDate: new Date("2025-05-25T12:00:00") },
-      { name: "Aramco Spanish GP", circuit: "Circuit de Barcelona-Catalunya", location: "Barcelona", raceDate: new Date("2025-06-01T12:00:00") },
-      { name: "Pirelli Canadian GP", circuit: "Circuit Gilles-Villeneuve", location: "Montréal", raceDate: new Date("2025-06-15T12:00:00") },
-      { name: "MSC Cruises Austrian GP", circuit: "Red Bull Ring", location: "Spielberg", raceDate: new Date("2025-06-29T12:00:00") },
-      { name: "Qatar Airways British GP", circuit: "Silverstone Circuit", location: "Silverstone", raceDate: new Date("2025-07-06T12:00:00") },
-      { name: "Moët & Chandon Belgian GP", circuit: "Circuit de Spa-Francorchamps", location: "Spa-Francorchamps", raceDate: new Date("2025-07-27T09:00:00") },
-      { name: "Lenovo Hungarian GP", circuit: "Hungaroring", location: "Budapest", raceDate: new Date("2025-08-03T09:00:00") },
-      { name: "Heineken Dutch GP", circuit: "Circuit Park Zandvoort", location: "Zandvoort", raceDate: new Date("2025-08-31T09:00:00") },
-      { name: "Pirelli Italian GP", circuit: "Autodromo Nazionale Monza", location: "Monza", raceDate: new Date("2025-09-07T09:00:00") },
-      { name: "Qatar Airways Azerbaijan GP", circuit: "Baku City Circuit", location: "Baku", raceDate: new Date("2025-09-21T07:00:00") },
-      { name: "Singapore Airlines Singapore GP", circuit: "Marina Bay Street Circuit", location: "Singapore", raceDate: new Date("2025-10-05T08:00:00") },
-      { name: "MSC Cruises United States GP", circuit: "Circuit of the Americas", location: "Austin", raceDate: new Date("2025-10-19T15:00:00") },
-      { name: "Mexico City GP", circuit: "Autodromo Hermanos Rodriguez", location: "Mexico City", raceDate: new Date("2025-10-26T16:00:00") },
-      { name: "MSC Cruises São Paulo GP", circuit: "Autodromo Jose Carlos Pace", location: "São Paulo", raceDate: new Date("2025-11-09T12:00:00") },
-      { name: "Heineken Las Vegas GP", circuit: "Las Vegas Street Circuit", location: "Las Vegas", raceDate: new Date("2025-11-22T23:00:00") },
-      { name: "Qatar Airways Qatar GP", circuit: "Losail International Circuit", location: "Lusail", raceDate: new Date("2025-11-30T11:00:00") },
-      { name: "Etihad Airways Abu Dhabi GP", circuit: "Yas Marina Circuit", location: "Yas Island", raceDate: new Date("2025-12-07T08:00:00") },
+        { name: "Louis Vuitton Australian GP", circuit: "Melbourne Grand Prix Circuit", location: "Melbourne", raceDate: new Date("2025-03-16T12:00:00"), apiMeetingName: "Australian Grand Prix" },
+        { name: "Heineken Chinese GP", circuit: "Shanghai International Circuit", location: "Shanghai", raceDate: new Date("2025-03-23T12:00:00"), apiMeetingName: "Chinese Grand Prix" },
+        { name: "Lenovo Japanese GP", circuit: "Suzuka International Racing Course", location: "Suzuka", raceDate: new Date("2025-04-06T12:00:00"), apiMeetingName: "Japanese Grand Prix" },
+        { name: "Gulf Air Bahrain GP", circuit: "Bahrain International Circuit", location: "Sakhir", raceDate: new Date("2025-04-13T12:00:00"), apiMeetingName: "Bahrain Grand Prix" },
+        { name: "STC Saudi Arabian GP", circuit: "Jeddah Street Circuit", location: "Jeddah", raceDate: new Date("2025-04-20T12:00:00"), apiMeetingName: "Saudi Arabian Grand Prix" },
+        { name: "Crypto.com Miami GP", circuit: "Miami International Autodrome", location: "Miami", raceDate: new Date("2025-05-04T12:00:00"), apiMeetingName: "Miami Grand Prix" },
+        { name: "AWS Made in Italy Emilia Romagna GP", circuit: "Autodromo Enzo e Dino Ferrari", location: "Imola", raceDate: new Date("2025-05-18T12:00:00"), apiMeetingName: "Emilia Romagna Grand Prix" },
+        { name: "Tag Heuer Monaco GP", circuit: "Circuit de Monaco", location: "Monaco", raceDate: new Date("2025-05-25T12:00:00"), apiMeetingName: "Monaco Grand Prix" },
+        { name: "Aramco Spanish GP", circuit: "Circuit de Barcelona-Catalunya", location: "Barcelona", raceDate: new Date("2025-06-01T12:00:00"), apiMeetingName: "Spanish Grand Prix" },
+        { name: "Pirelli Canadian GP", circuit: "Circuit Gilles-Villeneuve", location: "Montréal", raceDate: new Date("2025-06-15T12:00:00"), apiMeetingName: "Canadian Grand Prix" },
+        { name: "MSC Cruises Austrian GP", circuit: "Red Bull Ring", location: "Spielberg", raceDate: new Date("2025-06-29T12:00:00"), apiMeetingName: "Austrian Grand Prix" },
+        { name: "Qatar Airways British GP", circuit: "Silverstone Circuit", location: "Silverstone", raceDate: new Date("2025-07-06T12:00:00"), apiMeetingName: "British Grand Prix" },
+        { name: "Moët & Chandon Belgian GP", circuit: "Circuit de Spa-Francorchamps", location: "Spa-Francorchamps", raceDate: new Date("2025-07-27T09:00:00"), apiMeetingName: "Belgian Grand Prix" },
+        { name: "Lenovo Hungarian GP", circuit: "Hungaroring", location: "Budapest", raceDate: new Date("2025-08-03T09:00:00"), apiMeetingName: "Hungarian Grand Prix" },
+        { name: "Heineken Dutch GP", circuit: "Circuit Park Zandvoort", location: "Zandvoort", raceDate: new Date("2025-08-31T09:00:00"), apiMeetingName: "Dutch Grand Prix" },
+        { name: "Pirelli Italian GP", circuit: "Autodromo Nazionale Monza", location: "Monza", raceDate: new Date("2025-09-07T09:00:00"), apiMeetingName: "Italian Grand Prix" },
+        { name: "Qatar Airways Azerbaijan GP", circuit: "Baku City Circuit", location: "Baku", raceDate: new Date("2025-09-21T07:00:00"), apiMeetingName: "Azerbaijan Grand Prix" },
+        { name: "Singapore Airlines Singapore GP", circuit: "Marina Bay Street Circuit", location: "Singapore", raceDate: new Date("2025-10-05T08:00:00"), apiMeetingName: "Singapore Grand Prix" },
+        { name: "MSC Cruises United States GP", circuit: "Circuit of the Americas", location: "Austin", raceDate: new Date("2025-10-19T15:00:00"), apiMeetingName: "United States Grand Prix" },
+        { name: "Mexico City GP", circuit: "Autodromo Hermanos Rodriguez", location: "Mexico City", raceDate: new Date("2025-10-26T16:00:00"), apiMeetingName: "Mexico City Grand Prix" },
+        { name: "MSC Cruises São Paulo GP", circuit: "Autodromo Jose Carlos Pace", location: "São Paulo", raceDate: new Date("2025-11-09T12:00:00"), apiMeetingName: "São Paulo Grand Prix" },
+        { name: "Heineken Las Vegas GP", circuit: "Las Vegas Street Circuit", location: "Las Vegas", raceDate: new Date("2025-11-22T23:00:00"), apiMeetingName: "Las Vegas Grand Prix" },
+        { name: "Qatar Airways Qatar GP", circuit: "Losail International Circuit", location: "Lusail", raceDate: new Date("2025-11-30T11:00:00"), apiMeetingName: "Qatar Grand Prix" },
+        { name: "Etihad Airways Abu Dhabi GP", circuit: "Yas Marina Circuit", location: "Yas Island", raceDate: new Date("2025-12-07T08:00:00"), apiMeetingName: "Abu Dhabi Grand Prix" },
     ];
 
-    const upgradeData = [
+   const upgradeData = [
       { "Year": 2025, "RaceNo": 12, "RaceName": "Qatar Airways British GP", "Constructor": "MCLAREN F1 TEAM", "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025", "ComponentNo": 1, "UpdatedComponent": "Floor Body", "PrimaryReason": "Performance - Local Load", "GeometricDifferences": "Revised floor geometry", "Description": "The complete floor has been revised resulting in improved flow conditioning and a redistribution of suction to gain overall aerodynamic performance." },
       { "Year": 2025, "RaceNo": 12, "RaceName": "Qatar Airways British GP", "Constructor": "MCLAREN F1 TEAM", "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025", "ComponentNo": 2, "UpdatedComponent": "Rear Corner", "PrimaryReason": "Performance - Flow Conditioning", "GeometricDifferences": "Revised Rear Corner Inlet", "Description": "Modification to Rear Brake Duct Inlet aiming at overall improvement in local flow conditioning for improved aerodynamic and brake cooling performance." },
       { "Year": 2025, "RaceNo": 12, "RaceName": "Qatar Airways British GP", "Constructor": "Red Bull Racing", "RequiredEventDisplay": "FORMULA 1 BRITISH GRAND PRIX 2025", "ComponentNo": 1, "UpdatedComponent": "Floor Body", "PrimaryReason": "Performance - Local Load", "GeometricDifferences": "Re-profiled surfaces to supplement the changes to the fences", "Description": "Revised surfaces to improve pressure distribution over the length of the floor allowing more load to be extracted whilst maintaining adequate flow stability." },
@@ -903,7 +894,7 @@
 
     // --- Spoiler Feature Functions ---
     const API_BASE_URL = "https://api.openf1.org/v1";
-    const YEAR = 2025; // Using a fixed year as per test data
+    const YEAR = 2025; // Use 2025 data
     let sessionCache = {}; // Cache for session keys to reduce API calls
 
     async function getSession(location, sessionType) {
@@ -945,27 +936,6 @@
       }
     }
 
-    async function getCumulativePoints(driverNumber, raceDate) {
-      try {
-        const resp = await fetch(`${API_BASE_URL}/standings?year=${YEAR}&driver_number=${driverNumber}`);
-        if (!resp.ok) return 'N/A';
-        const standings = await resp.json();
-
-        const relevantStandings = standings.filter(s => new Date(s.date) <= new Date(raceDate));
-
-        if (relevantStandings.length > 0) {
-          // Sort to find the most recent standing on or before the race date
-          relevantStandings.sort((a, b) => new Date(b.date) - new Date(a.date));
-          return relevantStandings[0].points;
-        }
-
-        return 0; // No points before this race
-      } catch (error) {
-        console.error(`Error fetching points for driver ${driverNumber}:`, error);
-        return 'N/A';
-      }
-    }
-
     async function fetchRaceSpoilers(location, raceDate) {
       const raceSession = await getSession(location, "Race");
       const qualiSession = await getSession(location, "Qualifying");
@@ -991,11 +961,9 @@
 
         for (const driver of topThree) {
           const details = await getDriverDetails(driver.driver_number);
-          const points = await getCumulativePoints(driver.driver_number, raceDate);
           finishers.push({
             position: driver.position,
-            name: details.name,
-            points: points
+            name: details.name
           });
         }
       } catch (e) {
@@ -1045,7 +1013,6 @@
                                 <span class="text-xl w-8 inline-block">${medals[f.position - 1]}</span>
                                 <span class="font-semibold">${f.name}</span>
                             </div>
-                            <span class="text-blue-400 font-bold">${f.points} pts</span>
                         </li>`;
         });
         resultsHtml += `</ul></div>`;
@@ -1061,8 +1028,8 @@
     // --- Utility Functions ---
 
     function calculateCountdown(targetDate) {
-      const now = new Date().getTime();
-      const distance = targetDate.getTime() - now;
+      const now = new Date();
+      const distance = targetDate.getTime() - now.getTime();
 
       if (distance < 0) {
         return null; // Race has passed
@@ -1079,7 +1046,10 @@
       const now = new Date();
       let nextRace = null;
 
-      for (const race of raceSchedule) {
+      // Sort races by date to ensure we find the correct next one
+      const sortedRaces = [...raceSchedule].sort((a,b) => a.raceDate - b.raceDate);
+
+      for (const race of sortedRaces) {
         if (race.raceDate > now) {
           nextRace = race;
           break;
@@ -1090,9 +1060,9 @@
         const countdown = calculateCountdown(nextRace.raceDate);
         document.getElementById('nextRaceName').textContent = nextRace.name;
         document.getElementById('nextRaceCircuit').textContent = nextRace.circuit;
-        document.getElementById('countdownDays').textContent = countdown.days;
-        document.getElementById('countdownHours').textContent = countdown.hours;
-        document.getElementById('countdownMinutes').textContent = countdown.minutes;
+        document.getElementById('countdownDays').textContent = countdown ? countdown.days : 0;
+        document.getElementById('countdownHours').textContent = countdown ? countdown.hours : 0;
+        document.getElementById('countdownMinutes').textContent = countdown ? countdown.minutes : 0;
       } else {
         document.getElementById('nextRaceName').textContent = "Season Finished";
         document.getElementById('nextRaceCircuit').textContent = "Check back for the next season!";
@@ -1114,7 +1084,9 @@
     // --- Dropdown Population Functions ---
 
     function populateRaceNames() {
-      const raceNames = raceSchedule.map(item => item.name);
+      // Sort races by date before populating
+      const sortedRaces = [...raceSchedule].sort((a,b) => a.raceDate - b.raceDate);
+      const raceNames = sortedRaces.map(item => item.name);
       raceNameSelect.innerHTML = '<option value="" disabled selected>Select a Race Name</option>';
       raceNames.forEach(name => {
         const option = document.createElement('option');
@@ -1161,6 +1133,7 @@
 
     function displayDetails(selectedRace, selectedConstructor, selectedComponent) {
       spoilerSectionInCard.classList.add('hidden'); // Hide spoilers by default
+      saveDetailBtn.classList.remove('hidden');
 
       if (selectedRace && selectedConstructor && selectedComponent) {
         const foundDetail = upgradeData.find(
@@ -1176,13 +1149,13 @@
           detailDescription.textContent = foundDetail.Description;
           detailsCard.classList.remove('hidden');
 
-          // Show spoiler section only after details are shown for a past race
           const raceData = raceSchedule.find(r => r.name === selectedRace);
           if (raceData && raceData.raceDate < new Date()) {
             spoilerSectionInCard.classList.remove('hidden');
-            if (spoilerToggle.checked) {
-              updateSpoilers();
-            }
+            // Ensure toggle is off and content is hidden by default
+            spoilerToggle.checked = false;
+            spoilerContent.classList.add('max-h-0');
+            spoilerContent.classList.remove('max-h-[150rem]');
           }
 
         } else {
@@ -1198,17 +1171,32 @@
     raceNameSelect.addEventListener('change', (e) => {
       const selectedRace = e.target.value;
 
-      // Hide all optional sections initially
       teamDropdownContainer.classList.add('hidden');
       upgradesDropdownContainer.classList.add('hidden');
       detailsCard.classList.add('hidden');
       spoilerSectionInCard.classList.add('hidden');
 
-      // Check if there is specific upgrade data for the selected race
       const hasUpgradeData = upgradeData.some(item => item.RaceName === selectedRace);
 
       if (hasUpgradeData) {
         populateConstructors(selectedRace);
+      } else { 
+          const raceData = raceSchedule.find(r => r.name === selectedRace);
+          if (raceData && raceData.raceDate < new Date()) {
+            detailPartName.textContent = "N/A";
+            detailPrimaryReason.textContent = "N/A";
+            detailGeometricDifferences.textContent = "N/A";
+            detailDescription.textContent = "No specific upgrade data available for this race.";
+            detailsCard.classList.remove('hidden');
+            saveDetailBtn.classList.add('hidden');
+            spoilerSectionInCard.classList.remove('hidden');
+            
+            spoilerToggle.checked = false;
+            spoilerContent.classList.add('max-h-0');
+            spoilerContent.classList.remove('max-h-[150rem]');
+          } else {
+            saveDetailBtn.classList.remove('hidden');
+          }
       }
     });
 
@@ -1224,14 +1212,25 @@
     });
 
     spoilerToggle.addEventListener('change', () => {
-      if (spoilerToggle.checked) {
-        spoilerContent.classList.remove('max-h-0');
-        spoilerContent.classList.add('max-h-96');
-        updateSpoilers();
-      } else {
-        spoilerContent.classList.add('max-h-0');
-        spoilerContent.classList.remove('max-h-96');
-      }
+        if (spoilerToggle.checked) {
+            spoilerContent.classList.remove('max-h-0');
+            spoilerContent.classList.add('max-h-[150rem]');
+            updateSpoilers();
+
+            const selectedRaceName = raceNameSelect.value;
+            const raceData = raceSchedule.find(r => r.name === selectedRaceName);
+            
+            if (typeof initializeComparisonForRace === 'function') {
+                if (raceData && raceData.apiMeetingName) {
+                    initializeComparisonForRace(raceData.apiMeetingName, raceData.name);
+                } else {
+                    initializeComparisonForRace(null, selectedRaceName);
+                }
+            }
+        } else {
+            spoilerContent.classList.add('max-h-0');
+            spoilerContent.classList.remove('max-h-[150rem]');
+        }
     });
 
 
@@ -1341,7 +1340,7 @@
       if (spoilerToggle.checked) {
         spoilerToggle.checked = false;
         spoilerContent.classList.add('max-h-0');
-        spoilerContent.classList.remove('max-h-96');
+        spoilerContent.classList.remove('max-h-[150rem]');
       }
 
       raceNameSelect.value = item.raceName;
@@ -1368,6 +1367,357 @@
       setInterval(updateCountdown, 60000);
       updateSavedCount();
     };
+  </script>
+  <script>
+    // --- START: INTEGRATED DRIVER COMPARISON SCRIPT ---
+    (function() {
+        // --- CONFIGURATION ---
+        const OPENF1_API_BASE_URL = 'https://api.openf1.org/v1';
+
+        // --- DOM ELEMENTS ---
+        const mainContainer = document.querySelector('.session-container');
+
+        // --- APP STATE ---
+        let currentChart = null;
+        const apiCache = new Map();
+
+        // --- VIEW RENDERING ---
+        function renderView(html) {
+            mainContainer.innerHTML = html;
+        }
+
+        function getCompareViewHTML() {
+            return `
+                <h2 class="text-xl font-bold text-white mb-2">Compare Driver Performance</h2>
+                <div id="comparison-race-context" class="mb-4 p-3 bg-gray-900/50 rounded-lg border border-gray-700">
+                    <p class="text-gray-400">For Race: <span id="comparison-race-name" class="font-bold text-white">Not Selected</span></p>
+                </div>
+                <div class="filters flex gap-4 mb-4">
+                    <label for="session-select-compare" class="text-lg font-bold text-blue-400 self-center">Session:</label>
+                    <select id="session-select-compare" class="flex-grow bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="Race">Race</option><option value="Qualifying">Qualifying</option></select>
+                </div>
+                <div id="driver-selection" class="hidden flex-wrap gap-4 items-center mb-6 bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                    <select id="driver1-select" class="flex-1 bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                    <span class="text-gray-400 font-bold">vs</span>
+                    <select id="driver2-select" class="flex-1 bg-gray-900 text-gray-200 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                    <button id="compare-btn" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 shadow-xl font-bold">Compare</button>
+                </div>
+                <div id="loader" class="text-center p-4 text-gray-300" style="display:none;"></div>
+                <div id="error" class="text-center p-4 text-red-400 bg-red-900/40 border border-red-700 rounded-lg" style="display: none;"></div>
+                <div id="results-content" style="display: none;">
+                    <div id="fastest-lap-section" class="mb-8 p-6 bg-gray-900/50 rounded-lg border border-gray-700"></div>
+                    <div id="compare-results">
+                        <canvas id="compareChart"></canvas>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function populateDriverSelectForCompare() {
+            showLoader('Loading driver data...');
+            const meetingKey = mainContainer.dataset.meetingKey;
+            const sessionType = document.getElementById('session-select-compare').value;
+            const year = mainContainer.dataset.year;
+            
+            const errorEl = document.getElementById('error');
+            if (errorEl) errorEl.style.display = 'none';
+
+            if (!meetingKey) {
+                showError("No race event key found.");
+                hideLoader();
+                return;
+            }
+
+            const sessions = await fetchData(OPENF1_API_BASE_URL, `sessions?meeting_key=${meetingKey}`);
+            if (!sessions) { hideLoader(); return; }
+            
+            const session = sessions.find(s => s.session_name === sessionType);
+            if (!session) {
+                showError(`'${sessionType}' session not found for this event.`);
+                document.getElementById('driver-selection').style.display = 'none';
+                hideLoader();
+                return;
+            }
+
+            const drivers = await fetchData(OPENF1_API_BASE_URL, `drivers?session_key=${session.session_key}`);
+            if (!drivers || drivers.length === 0) {
+                showError(`No drivers found for the '${sessionType}' session.`);
+                document.getElementById('driver-selection').style.display = 'none';
+                hideLoader();
+                return;
+            }
+
+            const d1Select = document.getElementById('driver1-select');
+            const d2Select = document.getElementById('driver2-select');
+            d1Select.innerHTML = '';
+            d2Select.innerHTML = '';
+            drivers.sort((a, b) => a.full_name.localeCompare(b.full_name)).forEach(d => {
+                d1Select.innerHTML += `<option value="${d.driver_number}">${d.full_name}</option>`;
+                d2Select.innerHTML += `<option value="${d.driver_number}">${d.full_name}</option>`;
+            });
+
+            if (d2Select.options.length > 1) {
+                d2Select.selectedIndex = 1;
+            }
+            document.getElementById('driver-selection').style.display = 'flex';
+            hideLoader();
+        }
+
+        async function displayCompareData() {
+            showLoader('Fetching Session Data...');
+            const meetingKey = mainContainer.dataset.meetingKey;
+            const sessionType = document.getElementById('session-select-compare').value;
+            const driver1 = document.getElementById('driver1-select').value;
+            const driver2 = document.getElementById('driver2-select').value;
+            
+            if (driver1 === driver2) {
+                showError("Please select two different drivers.");
+                hideLoader();
+                return;
+            }
+
+            const sessions = await fetchData(OPENF1_API_BASE_URL, `sessions?meeting_key=${meetingKey}`);
+            if (!sessions) { hideLoader(); return; }
+
+            const session = sessions.find(s => s.session_name === sessionType);
+            if (!session) {
+                showError("Could not find the selected session.");
+                hideLoader();
+                return;
+            }
+            
+            const [laps, drivers] = await Promise.all([
+                fetchData(OPENF1_API_BASE_URL, `laps?session_key=${session.session_key}`),
+                fetchData(OPENF1_API_BASE_URL, `drivers?session_key=${session.session_key}`)
+            ]);
+
+            if (!laps || !drivers || laps.length === 0 || drivers.length === 0) {
+                showError("Could not load lap or driver data for this session.");
+                hideLoader();
+                return;
+            }
+
+            const driverMap = new Map(drivers.map(d => [d.driver_number, d]));
+            
+            const fastestLap = findFastestLap(laps, driverMap);
+            renderFastestLap(fastestLap);
+
+            renderLapGapChart(laps, driverMap, [parseInt(driver1), parseInt(driver2)], 'compareChart');
+            
+            hideLoader();
+        }
+
+        function findFastestLap(laps, driverMap) {
+            const validLaps = laps.filter(l => l.lap_duration);
+            if (validLaps.length === 0) return null;
+            const fastest = validLaps.reduce((f, c) => c.lap_duration < f.lap_duration ? c : f);
+            fastest.driver_info = driverMap.get(fastest.driver_number);
+            return fastest;
+        }
+        
+        function renderFastestLap(lap) {
+            const container = document.getElementById('fastest-lap-section');
+            if (!lap || !lap.driver_info) {
+                container.innerHTML = `<h2 class="text-lg font-bold text-white mb-2">Fastest Lap</h2><p class="text-gray-400">Data not available.</p>`;
+                return;
+            }
+            const minutes = Math.floor(lap.lap_duration / 60);
+            const seconds = (lap.lap_duration % 60).toFixed(3);
+            const timeString = `${minutes}:${seconds.toString().padStart(6, '0')}`;
+            container.innerHTML = `
+                <h2 class="text-lg font-bold text-white mb-3">Fastest Lap of the Session</h2>
+                <div class="fastest-lap-info text-center">
+                    <div class="time text-4xl font-extrabold text-amber-400 tracking-wider">${timeString}</div>
+                    <div class="driver text-xl font-semibold text-white mt-2">${lap.driver_info.full_name}</div>
+                    <div class="lap text-md text-gray-400">on Lap ${lap.lap_number}</div>
+                </div>`;
+        }
+
+        function renderLapGapChart(laps, driverMap, driverNumbers, canvasId) {
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const validLaps = laps.filter(l => l.lap_duration);
+            if (validLaps.length === 0) {
+                canvas.style.display = 'none';
+                showError("No valid lap data available to generate a chart.", true);
+                return;
+            }
+            canvas.style.display = 'block';
+
+            const driver1Info = driverMap.get(driverNumbers[0]);
+            const driver2Info = driverMap.get(driverNumbers[1]);
+
+            const driver1Laps = new Map(validLaps.filter(l => l.driver_number === driverNumbers[0]).map(l => [l.lap_number, l.lap_duration]));
+            const driver2Laps = new Map(validLaps.filter(l => l.driver_number === driverNumbers[1]).map(l => [l.lap_number, l.lap_duration]));
+
+            const allLapNumbers = [...new Set([...driver1Laps.keys(), ...driver2Laps.keys()])].sort((a, b) => a - b);
+
+            const gapData = [];
+            const backgroundColors = [];
+            
+            const color1 = `#${driver1Info.team_colour || '999999'}`;
+            const color2 = `#${driver2Info.team_colour || 'CCCCCC'}`;
+
+            for (const lapNum of allLapNumbers) {
+                const lap1Time = driver1Laps.get(lapNum);
+                const lap2Time = driver2Laps.get(lapNum);
+
+                if (lap1Time && lap2Time) {
+                    const gap = lap1Time - lap2Time;
+                    gapData.push(gap);
+                    backgroundColors.push(gap <= 0 ? color1 : color2);
+                } else {
+                    gapData.push(null);
+                    backgroundColors.push('transparent');
+                }
+            }
+            
+            currentChart = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: allLapNumbers,
+                    datasets: [{
+                        label: 'Gap (s)',
+                        data: gapData,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                           display: false
+                        },
+                        title: {
+                            display: true,
+                            text: `Lap Time Gap: ${driver1Info.full_name} vs. ${driver2Info.full_name}`,
+                            color: '#c9d1d9',
+                            font: { size: 16 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const gapInSeconds = context.parsed.y;
+                                    if (gapInSeconds === null) return 'No comparable lap time';
+                                    
+                                    const gapInMilliseconds = Math.abs(gapInSeconds * 1000);
+                                    const formattedSeconds = Math.abs(gapInSeconds).toFixed(3);
+
+                                    if (gapInSeconds <= 0) {
+                                        return `${driver1Info.full_name} was faster by: ${formattedSeconds}s (${gapInMilliseconds.toFixed(0)}ms)`;
+                                    } else {
+                                        return `${driver1Info.full_name} was slower by: ${formattedSeconds}s (${gapInMilliseconds.toFixed(0)}ms)`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Lap Number', color: '#8b949e' }, 
+                            ticks: { color: '#8b949e' },
+                            grid: { color: '#374151' }
+                        },
+                        y: { 
+                            title: { display: true, text: `Gap to ${driver2Info.full_name} (s)`, color: '#8b949e' }, 
+                            ticks: { color: '#8b949e' },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function fetchData(baseUrl, endpoint) {
+            const url = `${baseUrl}/${endpoint}`;
+            if (apiCache.has(url)) {
+                return apiCache.get(url);
+            }
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`API Error: ${response.status} for ${url}`);
+                const data = await response.json();
+                apiCache.set(url, data);
+                return data;
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                showError(error.message);
+                return null;
+            }
+        }
+        
+        function showLoader(message) {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.textContent = message;
+                loader.style.display = 'block';
+            }
+            document.getElementById('results-content').style.display = 'none';
+            const error = document.getElementById('error');
+            if (error) error.style.display = 'none';
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) loader.style.display = 'none';
+            document.getElementById('results-content').style.display = 'block';
+        }
+
+        function showError(message, isSoftError = false) {
+            const error = document.getElementById('error');
+            if (error) {
+                error.textContent = message;
+                error.style.display = 'block';
+            }
+            const loader = document.getElementById('loader');
+            if (loader) loader.style.display = 'none';
+            if (!isSoftError) {
+                document.getElementById('results-content').style.display = 'none';
+            }
+        }
+        
+        window.initializeComparisonForRace = async function(apiMeetingName, displayName) {
+            renderView(getCompareViewHTML());
+            const year = "2025"; 
+            mainContainer.dataset.year = year;
+            document.getElementById('comparison-race-name').textContent = displayName || 'N/A';
+            
+            document.getElementById('session-select-compare').addEventListener('change', populateDriverSelectForCompare);
+            document.getElementById('compare-btn').addEventListener('click', displayCompareData);
+            
+            if (!apiMeetingName) {
+                showError(`API mapping not found for "${displayName}". Cannot fetch race data.`);
+                return;
+            }
+            
+            showLoader('Finding Race Data...');
+
+            const meetings = await fetchData(OPENF1_API_BASE_URL, `meetings?year=${year}`);
+            if (!meetings) {
+                showError("Could not load race event data from API.");
+                hideLoader();
+                return;
+            }
+
+            let meeting = meetings.find(m => m.meeting_name === apiMeetingName);
+            
+            if (!meeting) {
+                showError(`Could not find a matching event for "${apiMeetingName}" in the API.`);
+                hideLoader();
+                return;
+            }
+
+            mainContainer.dataset.meetingKey = meeting.meeting_key;
+            await populateDriverSelectForCompare();
+        }
+    })();
+    // --- END: INTEGRATED DRIVER COMPARISON SCRIPT ---
   </script>
 </body>
 
