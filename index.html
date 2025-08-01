@@ -117,6 +117,9 @@
             id="detailGeometricDifferences"></span></p>
         <p class="text-gray-300"><span class="font-semibold text-white">Description:</span> <span
             id="detailDescription"></span></p>
+        
+        <!-- New element for upgrade statistics -->
+        <div id="detailUpgradeStats" class="mt-4 text-sm text-gray-400 border-t border-gray-700 pt-4 hidden"></div>
 
         <div id="spoilerSectionInCard" class="hidden mt-6 pt-6 border-t border-gray-700">
           <div class="flex items-center justify-between">
@@ -945,6 +948,7 @@
     const detailPrimaryReason = document.getElementById('detailPrimaryReason');
     const detailGeometricDifferences = document.getElementById('detailGeometricDifferences');
     const detailDescription = document.getElementById('detailDescription');
+    const detailUpgradeStats = document.getElementById('detailUpgradeStats'); // New element
     const saveDetailBtn = document.getElementById('saveDetailBtn');
     const showSavedDetailsBtn = document.getElementById('showSavedDetailsBtn');
     const savedCountSpan = document.getElementById('savedCount');
@@ -1202,9 +1206,42 @@
       detailsCard.classList.add('hidden');
     }
 
+    /**
+     * REVISED: Calculates statistics for all components for a given constructor.
+     * @param {string} constructor - The name of the team/constructor.
+     * @returns {object|null} An object with full team stats or null.
+     */
+    function getUpgradeStats(constructor) {
+        const teamUpgrades = upgradeData.filter(item => item.Constructor === constructor);
+        const totalUpgrades = teamUpgrades.length;
+
+        if (totalUpgrades === 0) {
+            return null;
+        }
+
+        const breakdown = {};
+        teamUpgrades.forEach(upgrade => {
+            const component = upgrade.UpdatedComponent;
+            if (!breakdown[component]) {
+                breakdown[component] = { count: 0, races: [] };
+            }
+            breakdown[component].count++;
+            // Ensure race name is unique for the component
+            if (!breakdown[component].races.includes(upgrade.RaceName)) {
+                breakdown[component].races.push(upgrade.RaceName);
+            }
+        });
+
+        return {
+            totalUpgrades: totalUpgrades,
+            breakdown: breakdown
+        };
+    }
+
     function displayDetails(selectedRace, selectedConstructor, selectedComponent) {
       spoilerSectionInCard.classList.add('hidden'); // Hide spoilers by default
       saveDetailBtn.classList.remove('hidden');
+      detailUpgradeStats.classList.add('hidden'); // Hide stats by default
 
       if (selectedRace && selectedConstructor && selectedComponent) {
         const foundDetail = upgradeData.find(
@@ -1218,6 +1255,37 @@
           detailPrimaryReason.textContent = foundDetail.PrimaryReason;
           detailGeometricDifferences.textContent = foundDetail.GeometricDifferences;
           detailDescription.textContent = foundDetail.Description;
+          
+          // --- REVISED: Display Upgrade Statistics ---
+          const stats = getUpgradeStats(foundDetail.Constructor);
+          if (stats && stats.totalUpgrades > 0) {
+              const componentName = foundDetail.UpdatedComponent;
+              const componentData = stats.breakdown[componentName];
+              
+              if (componentData) {
+                  const percentage = (componentData.count / stats.totalUpgrades) * 100;
+                  const raceShortNames = componentData.races.map(name => name.replace(/ (GP|Grand Prix)$/i, '')).join(', ');
+
+                  let upgradeHistoryText = `This team has upgraded their <strong>${componentName}</strong> <strong>${componentData.count}</strong> time(s) this season (at ${raceShortNames}).`;
+                  
+                  const allComponents = [];
+                  Object.keys(stats.breakdown).sort().forEach(part => {
+                      const partPercentage = (stats.breakdown[part].count / stats.totalUpgrades) * 100;
+                      if (part === componentName) {
+                          allComponents.push(`<strong class="text-white">${part} (${partPercentage.toFixed(0)}%)</strong>`);
+                      } else {
+                          allComponents.push(`${part} (${partPercentage.toFixed(0)}%)`);
+                      }
+                  });
+
+                  let breakdownText = `This represents <strong>${percentage.toFixed(0)}%</strong> of the team's total upgrades. Full breakdown: ${allComponents.join(', ')}.`;
+
+                  detailUpgradeStats.innerHTML = `${upgradeHistoryText}<br><br>${breakdownText}`;
+                  detailUpgradeStats.classList.remove('hidden');
+              }
+          }
+          // --- END REVISED ---
+
           detailsCard.classList.remove('hidden');
 
           const raceData = raceSchedule.find(r => r.name === selectedRace);
@@ -1258,6 +1326,7 @@
             detailPrimaryReason.textContent = "N/A";
             detailGeometricDifferences.textContent = "N/A";
             detailDescription.textContent = "No specific upgrade data available for this race.";
+            detailUpgradeStats.classList.add('hidden');
             detailsCard.classList.remove('hidden');
             saveDetailBtn.classList.add('hidden');
             spoilerSectionInCard.classList.remove('hidden');
